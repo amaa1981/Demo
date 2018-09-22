@@ -1,0 +1,18 @@
+FROM centos:6
+LABEL maintaniner="example@example.com"
+
+RUN yum update -y && \
+    yum install -y httpd net-tools && \
+    mkdir -p /run/httpd && \
+    rm -rf /run/http/* /tmp/httpd*
+
+COPY index.html /var/www/html/
+
+CMD echo "Remember to check your container IP Address"
+
+ENV ENVIRONMENT="production"
+
+VOLUME /myvol
+EXPOSE 80
+
+ENTRYPOINT apachectl "-DFOREGROUND"

@@ -1,0 +1,112 @@
+def application_name = "nodejs-custom"
+def label = "worker-${UUID.randomUUID().toString()}"
+def dtr_url = "eedtr01.ssbkang.io"
+def dtr_organisation = "ssbkang"
+def kubernetes_namespace = "steven-kang"
+
+podTemplate(
+  label: label, 
+  namespace: kubernetes_namespace,  
+  imagePullSecrets: [
+    'dtr-credential'
+  ], 
+  serviceAccount: 'jenkins-service-account', 
+  containers: [
+    containerTemplate(
+        name: 'jnlp',
+        image: "${dtr_url}/${dtr_organisation}/jnlp-slave:alpine",
+        args: '${computer.jnlpmac} ${computer.name}'
+    ),
+    containerTemplate(
+        name: 'docker',
+        image: "${dtr_url}/${dtr_organisation}/docker:0.1",
+        command: 'cat',
+        ttyEnabled: true
+    ),
+    containerTemplate(
+        name: 'kubectl', 
+        image: "${dtr_url}/${dtr_organisation}/kubectl:v1.8.11", 
+        command: 'cat', 
+        ttyEnabled: true
+    )
+  ], volumes: [
+    hostPathVolume(mountPath: '/var/run/docker.sock', hostPath: '/var/run/docker.sock')
+]) {
+    node (label) {
+        withCredentials([
+            [$class: 'UsernamePasswordMultiBinding', credentialsId: 'dtr_credential', usernameVariable: 'dtr_username', passwordVariable: 'dtr_password']
+        ]){
+            try {                
+                def my_repository = checkout scm                
+                def image = "${dtr_url}/${dtr_organisation}/${application_name}"                
+                def tag = (my_repository.GIT_COMMIT).substring(0,10)            
+
+                stage ('Build & Push Docker Image') {
+                    container('docker') {
+                        echo "Building ${application_name} Docker Container Image"
+                      sh "docker build -t ${image}:${tag} ."
+
+                        echo "Login to DTR"
+                        sh "docker login -u \"${dtr_username}\" -p \"${dtr_password}\" https://${dtr_url}"
+
+                        echo "Push the ${application_name}:${tag} image to DTR"
+                        sh "docker push ${image}:${tag}"
+                    }
+                }
+
+                stage ('Deploy') {
+                    container('kubectl') {
+                        sh """cat <<EOF | kubectl apply -f -
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: ${application_name}-deployment
+  namespace: ${kubernetes_namespace}
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: ${application_name}
+    spec:
+      containers:
+      - name: ${application_name}-container
+        image: ${image}:${tag}
+        ports:
+          - containerPort: 3000
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: 1Gi
+      imagePullSecrets:
+      - name: dtr-credential
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${application_name}-service
+  namespace: ${kubernetes_namespace}
+spec:
+  type: NodePort
+  ports:
+    - port: 3000
+      targetPort: 3000
+  selector:
+    app: ${application_name}
+EOF"""
+                    }
+                }
+
+                stage ('Clean up Docker Image Built') {
+                    container('docker') {
+                        sh "docker image rm ${image}:${tag}"
+                    }
+                }
+            }
+            catch (error) {
+                echo error.toString()
+                throw error
+            }
+        }
+    }
+}

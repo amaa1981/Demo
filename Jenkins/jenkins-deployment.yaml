@@ -1,0 +1,35 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: jenkins-master-deployment
+  namespace: <namespace>
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jenkins-master
+  template:
+    metadata:
+      labels:
+        app: jenkins-master
+    spec:
+      serviceAccountName: jenkins-service-account
+      containers:
+      - name: jenkins-master
+        image: 'prod-dtr.ajg.co.nz/crombie-lockwood/jenkins:2.121.3'
+        env:
+          - name: JAVA_ARGS
+            value: "-Xmx2048m"
+        securityContext:
+          allowPrivilegeEscalation: false
+        ports:
+        - containerPort: 8080
+          name: ui-port
+        - containerPort: 50000
+          name: slave-port
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: 2Gi
+      imagePullSecrets:
+      - name: dtr-credential

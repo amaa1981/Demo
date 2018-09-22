@@ -1,0 +1,18 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: jenkins-master
+  namespace: <namespace>
+spec:
+  type: NodePort
+  selector:
+    app: jenkins-master
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 8080
+    name: master-ui
+  - port: 50000
+    protocol: TCP
+    targetPort: 50000
+    name: slave-port

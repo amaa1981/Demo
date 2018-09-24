@@ -15,5 +15,9 @@ spec:
       containers:
       - image: myapp:v1
         name: myapp
+        resources:
+          limits:
+            cpu: "1"
+            memory: "125M"
         ports:
         - containerPort: 80

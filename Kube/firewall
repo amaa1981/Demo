@@ -1,0 +1,28 @@
+Firewall ports
+	firewall-cmd --change-interface=docker0 --permanent
+	firewall-cmd --add-port=179/tcp --permanent  
+	firewall-cmd --add-port=443/tcp --permanent 
+	firewall-cmd --add-port=2376/tcp --permanent
+	firewall-cmd --add-port=2377/tcp --permanent
+	firewall-cmd --add-port=4789/udp --permanent
+	firewall-cmd --add-port=6443/tcp --permanent
+	firewall-cmd --add-port=6444/tcp --permanent
+	firewall-cmd --add-port=7946/tcp --permanent
+	firewall-cmd --add-port=7946/udp --permanent
+	firewall-cmd --add-port=10250/tcp --permanent
+	firewall-cmd --add-port=12376/tcp --permanent
+	firewall-cmd --add-port=12378/tcp --permanent
+	firewall-cmd --add-port=12379/tcp --permanent
+	firewall-cmd --add-port=12380/tcp --permanent
+	firewall-cmd --add-port=12381/tcp --permanent
+	firewall-cmd --add-port=12382/tcp --permanent
+	firewall-cmd --add-port=12383/tcp --permanent
+	firewall-cmd --add-port=12384/tcp --permanent
+	firewall-cmd --add-port=12385/tcp --permanent
+	firewall-cmd --add-port=12386/tcp --permanent
+	firewall-cmd --add-port=12387/tcp --permanent
+	firewall-cmd --add-port=12388/tcp --permanent
+
+	firewall-cmd --reload
+	systemctl restart firewalld
+	systemctl restart docker

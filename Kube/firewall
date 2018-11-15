@@ -26,3 +26,15 @@ Firewall ports
 	firewall-cmd --reload
 	systemctl restart firewalld
 	systemctl restart docker
+	
+	docker container run -it --rm \
+   docker/dtr:2.5.4 install \
+   --ucp-node AJGNZHC10DK04VP \
+   --ucp-url prod-int-ucp.ajg.co.nz:443 \
+   --ucp-username admin \
+   --dtr-external-url prod-dtr.ajg.co.nz \
+   --dtr-ca "$(cat gd_bundle-g2-g1.crt)" \
+   --dtr-cert "$(cat ajg.co.nz_WildCard_Cert.crt)" \
+   --dtr-key "$(cat ajg.co.nz_WildCard_Cert.key)" \
+   --ucp-ca "$(cat ca.pem)"
+
